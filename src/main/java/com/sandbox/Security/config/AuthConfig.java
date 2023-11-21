@@ -60,10 +60,10 @@ public class AuthConfig {
                         .requestMatchers(HttpMethod.GET, "/admin").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/all").permitAll()
                         .requestMatchers(HttpMethod.POST,"/token").permitAll()
-                        .anyRequest().permitAll())
+                        .anyRequest().authenticated()) //mora bilo koji korisnik
                 .oauth2ResourceServer(configurer -> configurer.jwt(customizer))
 //                .csrf().disable()             //DEPRECATED
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable) //OBAVEZNO! zaustavlja post metode!!!
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(customizer);

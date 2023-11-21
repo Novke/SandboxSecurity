@@ -1,8 +1,9 @@
 package com.sandbox.Security.rest;
 
-import com.sandbox.Security.service.Service;
+import com.sandbox.Security.service.UserService;
 import com.sandbox.Security.service.TokenService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,19 +12,25 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class Controller {
 
-    private final Service service;
+    private final UserService userService;
     private final TokenService tokenService;
 
     @GetMapping("/users")
     public ResponseEntity<Object> findAllUsers(){
-        return ResponseEntity.ok(service.findAll());
+        return ResponseEntity.ok(userService.findAll());
     }
 
     @PostMapping("/token")
     public ResponseEntity<Object> getToken(Authentication authentication){
+
+        log.debug("Token request for user: '{}'", authentication.getName()); //**PLACEHOLDER
+
         String token = tokenService.generatetoken(authentication);
+        log.debug("Token: {}", token);
+
         return ResponseEntity.ok(token);
     }
 
@@ -34,6 +41,11 @@ public class Controller {
 
     @GetMapping("/all")
     public String getAll(){
+        return "uspesno";
+    }
+
+    @GetMapping("/norole")
+    public String getNoRole(){
         return "uspesno";
     }
 
