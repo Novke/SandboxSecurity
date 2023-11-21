@@ -9,16 +9,21 @@ import com.sandbox.Security.entity.User;
 import com.sandbox.Security.util.Jwks;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
@@ -66,9 +71,24 @@ public class AuthConfig {
                 .csrf(AbstractHttpConfigurer::disable) //OBAVEZNO! zaustavlja post metode!!!
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .httpBasic(customizer);
+                .httpBasic(customizer); //http basic ide samo na token ??
+        /////////// IZ NEKOG RAZLOGA NE RADI AKO SE ISKLJUCI HHTPBASIC ???
 
         return http.build();
+    }
+
+    /////////////// FILTER CHAIN ZA TOKEN GENERATOR //////////////////
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @Bean
+    SecurityFilterChain tokenFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .securityMatcher("/token")
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/token").permitAll())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(AbstractHttpConfigurer::disable)
+                .httpBasic(Customizer.withDefaults())
+                .build();
     }
 
 //    @Bean
@@ -94,5 +114,28 @@ public class AuthConfig {
     JwtDecoder jwtDecoder() throws JOSEException{
         return NimbusJwtDecoder.withPublicKey(rsaKey.toRSAPublicKey()).build();
     }
+
+    //KAD SE DODA OVO NE TREBA PREFIX {bcrypt} I NE PRIHVATA {noop}
+    @Bean
+    BCryptPasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    // "FILTER USER DATA FROM JWT TOKEN"
+    //
+    // PREDPOSTAVLJAM DA OVO NE TREBA AKO SAM DEFINISAO QUERY-je ZA JDBCUSERSMANAGER ??
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter(){
+        final JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles"); //OVO MORA DA SE POKLOPI S ONIM IZ TokenService-a
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+
+        final JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        return jwtAuthenticationConverter;
+    }
+
+
 
 }

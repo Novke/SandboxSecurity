@@ -28,7 +28,7 @@ public class Controller {
 
         log.debug("Token request for user: '{}'", authentication.getName()); //**PLACEHOLDER
 
-        String token = tokenService.generatetoken(authentication);
+        String token = tokenService.generateToken(authentication);
         log.debug("Token: {}", token);
 
         return ResponseEntity.ok(token);
@@ -45,7 +45,10 @@ public class Controller {
     }
 
     @GetMapping("/norole")
-    public String getNoRole(){
+    public String getNoRole(Authentication authentication){
+        System.err.println("===================");
+        log.debug("Token request for user: '{}'", authentication.getName());
+        System.err.println("===================");
         return "uspesno";
     }
 
