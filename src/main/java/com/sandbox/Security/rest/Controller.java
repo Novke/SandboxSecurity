@@ -27,7 +27,7 @@ public class Controller {
     public ResponseEntity<Object> getToken(Authentication authentication){
 
         log.debug("Token request for user: '{}'", authentication.getName()); //**PLACEHOLDER
-
+        System.err.println("User: " + authentication.getName());
         String token = tokenService.generateToken(authentication);
         log.debug("Token: {}", token);
 
@@ -35,7 +35,8 @@ public class Controller {
     }
 
     @GetMapping("/admin")
-    public ResponseEntity<Object> findAllAdmins(){
+    public ResponseEntity<Object> findAllAdmins(Authentication authentication){
+        log.debug("Pozbano od strane: {}", authentication.getName());
         return ResponseEntity.ok("admin");
     }
 
